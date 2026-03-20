@@ -3,36 +3,405 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>R.O.B.B.E. Scouting</title>
+    <title>R.O.B.B.E. Scouting - Master Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .master-header {
+        background-color: rgba(0, 0, 0, 0.2);
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+      }
+      .master-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 2.5em;
+      }
+      .master-header p {
+        margin: 0;
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+      .master-controls {
+        background-color: white;
+        padding: 20px;
+        margin: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .master-controls button {
+        padding: 10px 20px;
+        background-color: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+      }
+      .master-controls button:hover {
+        background-color: #0052a3;
+      }
+      .master-data {
+        background-color: white;
+        padding: 20px;
+        margin: 0 20px 20px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .team-summary {
+        background-color: #f9f9f9;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 4px solid #667eea;
+        border-radius: 4px;
+      }
+      .team-summary h3 {
+        margin: 0 0 10px 0;
+        color: #667eea;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin: 10px 0;
+      }
+      .stat-box {
+        background-color: white;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .stat-label {
+        font-size: 0.9em;
+        color: #666;
+      }
+      .stat-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #667eea;
+      }
+      .submission-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 0.9em;
+      }
+      .submission-table th,
+      .submission-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      .submission-table th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+      }
+      .submission-table tr:nth-child(even) {
+        background-color: #fafafa;
+      }
+      .nav-links {
+        background-color: white;
+        padding: 20px;
+        margin: 0 20px 20px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .nav-links a {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #667eea;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+      }
+      .nav-links a:hover {
+        background-color: #764ba2;
+      }
+      .status-msg {
+        text-align: center;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 20px;
+      }
+      .status-msg.loading {
+        background-color: #e3f2fd;
+        color: #1976d2;
+      }
+      .status-msg.success {
+        background-color: #e8f5e9;
+        color: #388e3c;
+      }
+      .status-msg.error {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+    </style>
   </head>
   <body>
-    <header>
-      <h1>R.O.B.B.E. Scouting</h1>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="page2.html">List</a>
-        <a href="page3.html">Pit Scouting</a>
-        <a href="page4.html">Events</a>
-        <a href="page5.html">Post-Match</a>
-      </nav>
-    </header>
+    <div class="master-header">
+      <h1>🤖 R.O.B.B.E. Scouting System</h1>
+      <p>Master Control Dashboard</p>
+    </div>
 
-    <main>
-      <section id="picture-area" aria-label="Picture area" 
-         style="display: flex; justify-content: center; align-items: center; height: 400px; border: 1px solid #ccc;">
-  <img src="hello.png" alt="Image 6" style="max-width: 100%; max-height: 100%;">
-</section>
+    <div class="nav-links">
+      <a href="page3.html">📝 Pit Scouting Form</a>
+      <a href="page5.html">📊 Match Scouting Sheet</a>
+      <a href="page2.html">📋 View All Submissions</a>
+      <a href="page4.html">📅 Events</a>
+    </div>
 
-    </main>
+    <div class="master-controls">
+      <button id="refresh-btn">🔄 Refresh All Data</button>
+      <button id="export-btn">📥 Export to CSV</button>
+      <button id="clear-btn">🗑️ Clear All (Admin)</button>
+      <span id="sync-status" style="color: #666; font-size: 0.9em;"></span>
+    </div>
 
-    <footer>
-      <small>Simple scouting pages — add content as needed.</small>
-    </footer>
+    <div id="status-msg"></div>
 
-    <script src="app.js"></script>
+    <div class="master-data">
+      <h2>📊 Live Data Summary</h2>
+      <div id="data-container">
+        <p style="color: #999;">Loading data from Master Database...</p>
+      </div>
+    </div>
+
+    <script src="storageSync.js"></script>
+    <script src="serverSync.js"></script>
+    <script>
+      // Master Dashboard Script
+      const $ = s => document.querySelector(s);
+      const statusEl = $('#status-msg');
+      const syncStatusEl = $('#sync-status');
+      const dataContainer = $('#data-container');
+
+      function showStatus(msg, type = 'loading') {
+        statusEl.className = `status-msg ${type}`;
+        statusEl.textContent = msg;
+      }
+
+      function updateSyncStatus() {
+        const now = new Date();
+        syncStatusEl.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+      }
+
+      async function loadMasterData() {
+        try {
+          showStatus('Loading data from Master Database...', 'loading');
+          
+          const allSubmissions = await serverSync.getSubmissions();
+
+          if (!allSubmissions || Object.keys(allSubmissions).length === 0) {
+            dataContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 30px;">No submissions yet. Begin scouting to populate this dashboard.</p>';
+            showStatus('No data available yet', 'success');
+            updateSyncStatus();
+            return;
+          }
+
+          // Group by team
+          const byTeam = {};
+          let pitCount = 0;
+          let matchCount = 0;
+
+          Object.entries(allSubmissions).forEach(([key, submission]) => {
+            const teamNum = submission.teamNumber || 'Unknown';
+            if (!byTeam[teamNum]) {
+              byTeam[teamNum] = { pit: [], match: [] };
+            }
+
+            if (submission.type === 'pit' || submission.source === 'page3') {
+              byTeam[teamNum].pit.push(submission);
+              pitCount++;
+            } else if (submission.type === 'postMatch' || submission.source === 'page5') {
+              byTeam[teamNum].match.push(submission);
+              matchCount++;
+            }
+          });
+
+          // Render summary
+          let html = `
+            <div class="stats">
+              <div class="stat-box">
+                <div class="stat-label">Total Teams</div>
+                <div class="stat-value">${Object.keys(byTeam).length}</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Pit Entries</div>
+                <div class="stat-value">${pitCount}</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Match Entries</div>
+                <div class="stat-value">${matchCount}</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label">Total Submissions</div>
+                <div class="stat-value">${Object.keys(allSubmissions).length}</div>
+              </div>
+            </div>
+          `;
+
+          // List teams
+          html += '<h3 style="margin-top: 20px;">Team Breakdown:</h3>';
+          
+          Object.keys(byTeam)
+            .sort((a, b) => parseInt(a) - parseInt(b))
+            .forEach(teamNum => {
+              const { pit, match } = byTeam[teamNum];
+              html += `
+                <div class="team-summary">
+                  <h3>Team ${teamNum}</h3>
+                  <div class="stats">
+                    <div class="stat-box">
+                      <div class="stat-label">Pit Scouting</div>
+                      <div class="stat-value">${pit.length}</div>
+                    </div>
+                    <div class="stat-box">
+                      <div class="stat-label">Matches Scouted</div>
+                      <div class="stat-value">${match.length}</div>
+                    </div>
+                  </div>
+
+                  ${pit.length > 0 ? `
+                    <details style="margin-top: 10px;">
+                      <summary style="cursor: pointer; font-weight: bold; color: #667eea;">📋 Latest Pit Scouting</summary>
+                      <table class="submission-table">
+                        <thead>
+                          <tr>
+                            <th>Scout Data</th>
+                            <th>Submitted</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${pit.map(p => `
+                            <tr>
+                              <td>${Object.entries(p)
+                                .filter(([k]) => !['id', 'type', 'source', 'teamNumber', 'sentAt', 'timestamp', 'collection'].includes(k))
+                                .slice(0, 3)
+                                .map(([k, v]) => v ? v.substring(0, 30) : '')
+                                .join(' | ')}</td>
+                              <td>${new Date(p.sentAt || p.timestamp).toLocaleString()}</td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+                    </details>
+                  ` : ''}
+
+                  ${match.length > 0 ? `
+                    <details style="margin-top: 10px;">
+                      <summary style="cursor: pointer; font-weight: bold; color: #667eea;">📊 Match Data (${match.length})</summary>
+                      <table class="submission-table">
+                        <thead>
+                          <tr>
+                            <th>Match #</th>
+                            <th>Key Stats</th>
+                            <th>Submitted</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${match.map(m => `
+                            <tr>
+                              <td>${m['match'] || m['match-0'] || 'N/A'}</td>
+                              <td>${m['shotballs-0'] ? 'Shots: ' + m['shotballs-0'] : ''}${m['hung-0'] ? ', Hung: ' + m['hung-0'] : ''}</td>
+                              <td>${new Date(m.sentAt || m.timestamp).toLocaleString()}</td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+                    </details>
+                  ` : ''}
+                </div>
+              `;
+            });
+
+          dataContainer.innerHTML = html;
+          showStatus('✓ Data loaded successfully', 'success');
+          updateSyncStatus();
+
+        } catch (error) {
+          console.error('Error loading data:', error);
+          showStatus(`Error: ${error.message}`, 'error');
+        }
+      }
+
+      // Export function
+      async function exportToCSV() {
+        try {
+          showStatus('Preparing export...', 'loading');
+          const allSubmissions = await serverSync.getSubmissions();
+
+          if (!allSubmissions || Object.keys(allSubmissions).length === 0) {
+            alert('No data to export');
+            return;
+          }
+
+          let csv = 'Team Number,Type,Key Data,Submitted At\n';
+
+          Object.entries(allSubmissions).forEach(([key, sub]) => {
+            const teamNum = sub.teamNumber || 'Unknown';
+            const type = sub.type || sub.source || 'Unknown';
+            const data = Object.entries(sub)
+              .filter(([k]) => !['id', 'type', 'source', 'teamNumber', 'sentAt', 'timestamp', 'collection'].includes(k))
+              .slice(0, 3)
+              .map(([k, v]) => v)
+              .join(' | ');
+            const time = new Date(sub.sentAt || sub.timestamp).toISOString();
+
+            csv += `"${teamNum}","${type}","${data}","${time}"\n`;
+          });
+
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `scouting_export_${new Date().toISOString().split('T')[0]}.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+
+          showStatus('✓ Export downloaded', 'success');
+        } catch (error) {
+          showStatus(`Export error: ${error.message}`, 'error');
+        }
+      }
+
+      // Event listeners
+      $('#refresh-btn').addEventListener('click', loadMasterData);
+      $('#export-btn').addEventListener('click', exportToCSV);
+      $('#clear-btn').addEventListener('click', async () => {
+        if (!confirm('⚠️ ADMIN: Clear ALL data from Master Database? This cannot be undone!')) return;
+        const pwd = prompt('Enter admin password to confirm:');
+        if (pwd === 'admin') {
+          alert('Admin function would clear server storage. Contact your administrator.');
+        } else {
+          alert('Incorrect password');
+        }
+      });
+
+      // Load data on page load
+      loadMasterData();
+
+      // Auto-refresh every 20 seconds
+      setInterval(loadMasterData, 20000);
+
+      console.log('Master Dashboard loaded');
+    </script>
   </body>
 </html>
