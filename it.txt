@@ -1,0 +1,10 @@
+const url = localStorage.getItem('googleSheetsUrl');
+fetch(url, {
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body: JSON.stringify([{teamNumber:'123', match:'1'}])
+})
+.then(r=>r.ok?console.log('ok'):console.error(r.status,r.statusText))
+.catch(e=>console.error('fetch error',e));
+
+Scouting Data Receiver

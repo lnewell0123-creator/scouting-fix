@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Master QR Scanner - R.O.B.B.E.</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Load the HTML5 QR Code Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    .scanner-wrapper {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    #reader {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .scan-history {
+      margin: 20px;
+      overflow-x: auto;
+    }
+    .scan-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .scan-table th, .scan-table td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    .scan-table th { background-color: #f8f9fa; font-weight: bold; color: #333; }
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-weight: bold;
+    }
+    .new-row { background-color: #e3f2fd !important; animation: fadeOut 2s forwards; }
+    @keyframes fadeOut { from { background-color: #e3f2fd; } to { background-color: white; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📷 Master QR Data Receiver</h1>
+    <nav>
+      <a href="index.html">Dashboard</a>
+      <a href="page2.html">List View</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="scanner-wrapper">
+      <h2>Ready to Scan</h2>
+      <p>Position a scout's QR code within the frame to sync their latest match.</p>
+      <div id="reader"></div>
+      <div id="scan-feedback" style="margin-top: 15px; font-weight: bold;"></div>
+    </div>
+
+    <div class="scan-history">
+      <h3>Live Sync Log</h3>
+      <table class="scan-table" id="scan-log">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Team #</th>
+            <th>Match #</th>
+            <th>Scout</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="serverSync.js"></script>
+  <script>
+    const seenUuids = new Set();
+    const logBody = document.querySelector('#scan-log tbody');
+    const feedback = document.getElementById('scan-feedback');
+
+    async function onScanSuccess(decodedText, decodedResult) {
+      try {
+        const data = JSON.parse(decodedText);
+        if (data.uuid && seenUuids.has(data.uuid)) return;
+        if (data.uuid) seenUuids.add(data.uuid);
+
+        appendToLog(data);
+
+        if (window.serverSync && serverSync.saveSubmission) {
+          try {
+            const type = (data.type === 'pit') ? 'pitScouting' : 'matchScouting';
+            await serverSync.saveSubmission(type, data);
+            feedback.innerHTML = `<span style="color: #2e7d32">✓ Team ${data.teamNumber || '??'} Synced to Database</span>`;
+          } catch (e) {
+            feedback.innerHTML = `<span style="color: #d32f2f">⚠ Server Error: Saved to UI only.</span>`;
+          }
+        }
+      } catch (err) {
+        console.error("QR Parse Error:", err);
+        feedback.innerHTML = `<span style="color: #d32f2f">⚠ Invalid QR Data Format</span>`;
+      }
+    }
+
+    function appendToLog(data) {
+      const row = document.createElement('tr');
+      row.className = 'new-row';
+      const time = new Date().toLocaleTimeString();
+      const team = data.teamNumber || data['teamNumber-0'] || 'N/A';
+      const match = data.match || data['match-0'] || 'N/A';
+      const scout = data.scout || 'Unknown';
+
+      row.innerHTML = `
+        <td>${time}</td>
+        <td><strong>${team}</strong></td>
+        <td>${match}</td>
+        <td>${scout}</td>
+        <td><span class="status-badge">SYNCED</span></td>
+      `;
+      logBody.prepend(row);
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", { fps: 10, qrbox: {width: 250, height: 250} }
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>

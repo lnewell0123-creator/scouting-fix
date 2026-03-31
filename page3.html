@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <!-- Load QR Code library -->
+    <script src="qrcode.min.js"></script>
   </head>
   <body>
     <header>
@@ -23,6 +25,15 @@
 
     <main>
       <p>Required fields: <strong>Team Number</strong>, <strong>Team Name</strong>, <strong>Leader</strong>, <strong>Auto Strat</strong>. Use <strong>Add Question</strong> to add custom questions. Submitting a form with a Team Number will create or update the data sheet (List page) for that team.</p>
+
+      <!-- QR Modal Container -->
+      <div id="qr-modal" class="qr-modal" onclick="this.style.display='none'">
+        <div class="qr-content" onclick="event.stopPropagation()">
+          <h3>Scan this QR Code</h3>
+          <div id="qr-container"></div>
+          <p style="margin-top:10px; font-size:0.8em; color:#666;">Click anywhere outside to close</p>
+        </div>
+      </div>
 
       <div class="form-controls-top">
         <button type="button" id="add-question">Add Question</button>
@@ -456,6 +467,7 @@
     </script>
     <script src="storageSync.js"></script>
     <script src="serverSync.js"></script>
+    <script src="qrSync.js"></script>
     <script src="app.js"></script>
     <script src="page3-firebase-sync.js"></script>
   </body>

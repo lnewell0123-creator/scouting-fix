@@ -1,5 +1,5 @@
-// Page 3 (Pit Scouting) - Firebase Sync Extension
-// This adds the ability to send form submissions to the server/Firebase with password protection
+// Page 3 (Pit Scouting) - Local Master Sync Extension
+// This adds the ability to send form submissions to the local Master Server with password protection
 
 (function() {
   // Wait for DOM and existing functions to be ready
@@ -17,21 +17,34 @@
   if (formControls) {
     const syncBtn = document.createElement('button');
     syncBtn.type = 'button';
-    syncBtn.id = 'firebase-sync-btn';
+    syncBtn.id = 'local-sync-btn';
     syncBtn.textContent = 'Send to Master Database';
-    syncBtn.className = 'firebase-sync-btn';
+    syncBtn.className = 'local-sync-btn';
     syncBtn.style.cssText = 'background-color: #0066cc; color: white; cursor: pointer; margin-left: 10px;';
     
+    const qrBtn = document.createElement('button');
+    qrBtn.type = 'button';
+    qrBtn.id = 'qr-sync-btn';
+    qrBtn.textContent = 'Show Sync QR';
+    qrBtn.style.cssText = 'background-color: #e67e22; color: white; cursor: pointer; margin-left: 10px;';
+
     formControls.appendChild(syncBtn);
+    formControls.appendChild(qrBtn);
 
     syncBtn.addEventListener('click', async (e) => {
       e.preventDefault();
-      await syncPitFormToFirebase();
+      await syncPitFormToServer();
+    });
+
+    qrBtn.addEventListener('click', () => {
+      // Generate QR from the 'submissions' list
+      window.qrSync.showLatestMatchQR('qr-container', 'submissions');
+      document.getElementById('qr-modal').style.display = 'flex';
     });
   }
 
-  // Function to sync the most recent submission to Firebase
-  window.syncPitFormToFirebase = async function() {
+  // Function to sync the most recent submission to the Local Server
+  window.syncPitFormToServer = async function() {
     try {
       // Check if password is set
       if (!localStorage.getItem('scout-pass')) {
@@ -64,7 +77,7 @@
         return;
       }
 
-      const btn = $('#firebase-sync-btn');
+      const btn = $('#local-sync-btn');
       btn.disabled = true;
       btn.textContent = 'Sending...';
 
@@ -97,5 +110,5 @@
     }
   };
 
-  console.log('Page 3 Firebase sync loaded');
+  console.log('Page 3 Local Sync loaded');
 })();

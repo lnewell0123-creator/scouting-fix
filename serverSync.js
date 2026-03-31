@@ -1,121 +1,42 @@
-// Server Sync Integration for Form Data
-// This module handles sending form data to the server (which can store in Firebase)
-// and retrieving synced data from the server
+// Local Network Sync Library
+const serverSync = {
+    // If running on a scout tablet, change 'localhost' to the Master Laptop's IP
+    // e.g., 'http://192.168.1.15:8081'
+    getServerUrl: () => {
+        const savedIp = localStorage.getItem('master-server-ip');
+        return savedIp ? `http://${savedIp}:8081` : window.location.origin;
+    },
 
-class ServerSync {
-  constructor(serverUrl = '') {
-    this.serverUrl = serverUrl || window.location.origin;
-    this.baseUrl = `${this.serverUrl}/api/storage`;
-  }
-
-  // Save form submission to server
-  async saveSubmission(collectionName, data) {
-    try {
-      const key = `${collectionName}_${data.teamNumber || 'unknown'}_${Date.now()}`;
-      
-      const response = await fetch(`${this.baseUrl}/${encodeURIComponent(key)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          collection: collectionName,
-          timestamp: new Date().toISOString(),
-          ...data
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Submitted to server:', result);
-        return true;
-      } else {
-        throw new Error(`Server error: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error saving to server:', error);
-      throw error;
-    }
-  }
-
-  // Get all submissions from server
-  async getSubmissions(collectionName) {
-    try {
-      const response = await fetch(`${this.baseUrl}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const allData = await response.json();
+    saveSubmission: async (type, payload) => {
+        const url = `${serverSync.getServerUrl()}/api/sync`;
         
-        // Filter by collection if specified
-        if (collectionName) {
-          const filtered = {};
-          Object.entries(allData).forEach(([key, value]) => {
-            if (key.startsWith(collectionName + '_')) {
-              filtered[key] = value;
-            }
-          });
-          return filtered;
-        }
-        return allData;
-      } else {
-        throw new Error(`Server error: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error fetching from server:', error);
-      return {};
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, payload })
+        });
+
+        if (!response.ok) throw new Error('Server connection failed');
+        return await response.json();
+    },
+
+    fetchAllData: async () => {
+        const url = `${serverSync.getServerUrl()}/api/storage`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Could not fetch master data');
+        return await response.json();
+    },
+
+    // Added getSubmissions to fix "not a function" error and flatten grouped server data
+    getSubmissions: async () => {
+        const data = await serverSync.fetchAllData();
+        // The dashboard expects a single object of records. 
+        // We combine pit and match scouting arrays into one object keyed by record ID.
+        const all = {};
+        if (data.pitScouting) data.pitScouting.forEach(entry => { all[entry.id] = entry; });
+        if (data.matchScouting) data.matchScouting.forEach(entry => { all[entry.id] = entry; });
+        
+        return Object.keys(all).length > 0 ? all : data;
     }
-  }
-
-  // Get submissions by team number
-  async getTeamSubmissions(teamNumber) {
-    try {
-      const allData = await this.getSubmissions();
-      const teamData = {};
-      
-      Object.entries(allData).forEach(([key, value]) => {
-        if (value.teamNumber === parseInt(teamNumber)) {
-          teamData[key] = value;
-        }
-      });
-      
-      return teamData;
-    } catch (error) {
-      console.error('Error fetching team submissions:', error);
-      return {};
-    }
-  }
-
-  // Subscribe to server updates (using SSE)
-  async subscribeToUpdates(callback) {
-    try {
-      const eventSource = new EventSource(`${this.serverUrl}/api/stream`);
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          callback(data);
-        } catch (e) {
-          console.error('Error parsing server update:', e);
-        }
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('Server stream error:', error);
-        eventSource.close();
-      };
-
-      return eventSource; // Return for cleanup
-    } catch (error) {
-      console.error('Error subscribing to updates:', error);
-      return null;
-    }
-  }
-}
-
-// Initialize server sync
-const serverSync = new ServerSync();
+};
+window.serverSync = serverSync;

@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <!-- Add the QR Library -->
+    <script src="qrcode.min.js"></script>
   </head>
   <body>
     <header>
@@ -23,6 +25,15 @@
 
     <main>
       <p>Editable form for post-match scouting. Add columns as needed.</p>
+
+      <!-- QR Modal Container -->
+      <div id="qr-modal" class="qr-modal" onclick="this.style.display='none'">
+        <div class="qr-content" onclick="event.stopPropagation()">
+          <h3>Scan this QR Code</h3>
+          <div id="qr-container"></div>
+          <p style="margin-top:10px; font-size:0.8em; color:#666;">Click anywhere outside to close</p>
+        </div>
+      </div>
 
       <div class="form-controls-top">
         <button type="button" id="add-column">Add Column</button>
@@ -307,6 +318,7 @@
 
         <div class="form-controls">
           <button id="submit-btn" type="submit">Submit</button>
+          <button type="button" id="show-qr-btn" style="background-color: #e67e22; color: white;">Show Sync QR</button>
           <button type="button" id="clear-all">Clear All</button>
         </div>
       </form>
@@ -485,6 +497,17 @@
           addCol.addEventListener('click', addColumn);
           setPwd.addEventListener('click', setPassword);
           clearPwd.addEventListener('click', clearPassword);
+
+          const qrBtn = $('#show-qr-btn');
+          if (qrBtn) {
+            qrBtn.addEventListener('click', () => {
+              // Ensure we check 'submissions' which is where app.js saves everything
+              const raw = localStorage.getItem('submissions');
+              if (!raw || JSON.parse(raw).length === 0) return alert('Submit data first!');
+              window.qrSync.showLatestMatchQR('qr-container', 'submissions');
+              $('#qr-modal').style.display = 'flex';
+            });
+          }
 
           renderHeaders();
           tableBody.innerHTML = '';
