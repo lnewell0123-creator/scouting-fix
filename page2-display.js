@@ -54,72 +54,51 @@
         return;
       }
 
-      // Group submissions by team number
+      // Group submissions by team number, only from page5
       const byTeam = {};
       Object.entries(allSubmissions).forEach(([key, submission]) => {
-        const teamNum = submission.teamNumber || 'Unknown';
-        if (!byTeam[teamNum]) {
-          byTeam[teamNum] = [];
+        if (submission.source === 'page5') {
+          const teamNum = submission.teamNumber || 'Unknown';
+          if (!byTeam[teamNum]) {
+            byTeam[teamNum] = [];
+          }
+          byTeam[teamNum].push({
+            id: key,
+            ...submission
+          });
         }
-        byTeam[teamNum].push({
-          id: key,
-          ...submission
-        });
       });
 
       // Render grouped data
       let html = '';
       Object.keys(byTeam).sort((a, b) => parseInt(a) - parseInt(b)).forEach(teamNum => {
         const submissions = byTeam[teamNum];
-        const latestPit = submissions.find(s => s.type === 'pit' || s.source === 'page3');
-        const matchSubmissions = submissions.filter(s => s.type === 'postMatch' || s.source === 'page5');
+        const matchSubmissions = submissions.filter(s => s.type === 'matchScouting').sort((a, b) => {
+          const aTime = new Date(a.sentAt || a.timestamp || 0);
+          const bTime = new Date(b.sentAt || b.timestamp || 0);
+          if (aTime.getTime() !== bTime.getTime()) {
+            return aTime - bTime; // Sort by date ascending
+          }
+          const aMatch = parseInt(a['match-0'] || a['match'] || 0);
+          const bMatch = parseInt(b['match-0'] || b['match'] || 0);
+          return aMatch - bMatch; // Then by match number ascending
+        });
 
         html += `
-          <div style="background-color: #f9f9f9; padding: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc; border-radius: 4px;">
-            <h4 style="margin-top: 0; color: #0066cc;">Team ${teamNum}</h4>
-            
-            ${latestPit ? `
-              <div style="margin-bottom: 10px;">
-                <strong>Last Pit Scouting:</strong>
-                <ul style="margin: 5px 0; padding-left: 20px;">
-                  ${formatSubmission(latestPit).map(line => `<li style="font-size: 0.9em;">${line}</li>`).join('')}
-                </ul>
+          <details style="background-color: #f9f9f9; padding: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc; border-radius: 4px;">
+            <summary style="cursor: pointer; font-weight: bold; color: #0066cc; margin-bottom: 10px;">Team ${teamNum}</summary>
+            <div style="margin-top: 10px;">
+              <button onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';" style="margin-right: 10px;">Pit Scouting</button>
+              <button onclick="this.nextElementSibling.nextElementSibling.style.display = this.nextElementSibling.nextElementSibling.style.display === 'none' ? 'block' : 'none';">Match Scouting</button>
+              <div style="display: none; margin-top: 10px;">
+                <strong>Pit Scouting:</strong> No data available.
               </div>
-            ` : ''}
-
-            ${matchSubmissions.length > 0 ? `
-              <div>
-                <strong>Match Submissions (${matchSubmissions.length}):</strong>
-                <table style="width: 100%; font-size: 0.85em; border-collapse: collapse; margin-top: 5px;">
-                  <thead>
-                    <tr style="background-color: #efefef;">
-                      <th style="border: 1px solid #ddd; padding: 4px;">Match</th>
-                      <th style="border: 1px solid #ddd; padding: 4px;">Key Data</th>
-                      <th style="border: 1px solid #ddd; padding: 4px;">Sent</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${matchSubmissions.map(m => `
-                      <tr>
-                        <td style="border: 1px solid #ddd; padding: 4px;">${m['match-0'] || m['match'] || 'N/A'}</td>
-                        <td style="border: 1px solid #ddd; padding: 4px;">
-                          ${m['shotballs-0'] ? `Shots: ${m['shotballs-0']}` : ''}
-                          ${m['hung-0'] ? `Hung: ${m['hung-0']}` : ''}
-                        </td>
-                        <td style="border: 1px solid #ddd; padding: 4px; font-size: 0.8em;">
-                          ${formatTime(m.sentAt || m.timestamp)}
-                        </td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
+              <div style="display: none; margin-top: 10px;">
+                <strong>Match Scouting:</strong>
+                ${renderMatchTable(matchSubmissions)}
               </div>
-            ` : ''}
-
-            <p style="margin: 8px 0 0 0; font-size: 0.85em; color: #999;">
-              Synced: ${formatTime(latestPit?.sentAt || latestPit?.timestamp || matchSubmissions[0]?.sentAt)}
-            </p>
-          </div>
+            </div>
+          </details>
         `;
       });
 
@@ -132,20 +111,43 @@
     }
   }
 
-  function formatSubmission(sub) {
-    const lines = [];
-    const excludeFields = ['id', 'type', 'source', 'sentAt', 'timestamp', 'collection', 'teamNumber'];
-    
-    Object.entries(sub).forEach(([key, value]) => {
-      if (!excludeFields.includes(key) && value && value.trim && value.trim()) {
-        const label = key
-          .replace(/[a-z]([A-Z])/g, (m) => m[0] + ' ' + m[1])
-          .replace(/^./, (m) => m.toUpperCase());
-        lines.push(`${label}: ${escapeHtml(value)}`);
-      }
+  function renderMatchTable(matchSubmissions) {
+    if (!matchSubmissions.length) return '';
+
+    // Get all unique field names, excluding metadata
+    const excludeFields = ['id', 'type', 'source', 'sentAt', 'timestamp', 'collection', 'rowIndex', 'clientTimestamp', 'uuid'];
+    const allFields = new Set();
+    matchSubmissions.forEach(m => {
+      Object.keys(m).forEach(key => {
+        if (!excludeFields.includes(key)) allFields.add(key);
+      });
     });
-    
-    return lines.slice(0, 5); // Show first 5 fields
+    const fields = Array.from(allFields).sort();
+
+    // Add Sent column
+    fields.push('Sent');
+
+    let html = `<table style="width: 100%; font-size: 0.85em; border-collapse: collapse; margin-top: 5px;">
+      <thead>
+        <tr style="background-color: #efefef;">
+          ${fields.map(f => `<th style="border: 1px solid #ddd; padding: 4px;">${f}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${matchSubmissions.map(m => `
+          <tr>
+            ${fields.map(f => {
+              if (f === 'Sent') {
+                return `<td style="border: 1px solid #ddd; padding: 4px; font-size: 0.8em;">${formatTime(m.sentAt || m.timestamp)}</td>`;
+              }
+              return `<td style="border: 1px solid #ddd; padding: 4px;">${escapeHtml(m[f] || '')}</td>`;
+            }).join('')}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+
+    return html;
   }
 
   function formatTime(timestamp) {

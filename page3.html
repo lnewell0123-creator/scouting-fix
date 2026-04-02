@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Load QR Code library -->
     <script src="qrcode.min.js"></script>
+    <!-- Load HTML5 QR Code library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
   </head>
   <body>
     <header>
@@ -35,22 +37,61 @@
         </div>
       </div>
 
+      <!-- Master Data Scanner Modal -->
+      <div id="scanner-modal" class="qr-modal" onclick="this.style.display='none'">
+        <div class="qr-content" onclick="event.stopPropagation()">
+          <h3>Scan Master Data QR</h3>
+          <div id="scanner-container"></div>
+          <p style="margin-top:10px; font-size:0.8em; color:#666;">Click anywhere outside to close</p>
+        </div>
+      </div>
+
       <div class="form-controls-top">
-        <button type="button" id="add-question">Add Question</button>
-        <button type="button" id="reset-defaults">Reset Defaults</button>
-        <button type="button" id="set-password">Set/Change Password</button>
-        <button type="button" id="clear-password">Clear Password</button>
+        <button type="button" id="add-question" onclick="addQuestionPrompt()">Add Question</button>
+        <button type="button" id="reset-defaults" onclick="resetDefaults()">Reset Defaults</button>
+        <button type="button" id="set-password" onclick="setPasswordFlow()">Set/Change Password</button>
+        <button type="button" id="clear-password" onclick="clearPasswordFlow()">Clear Password</button>
         <label for="teamsFile" style="margin-left:8px;color:#ff3333;font-size:.9rem">Upload teams.json</label>
         <input type="file" id="teamsFile" accept="application/json" style="margin-left:4px">
         <span id="teamsFileMsg" style="margin-left:8px;color:#ff3333;font-size:.9rem;display:none"></span>
       </div>
 
       <form id="scout-form">
-        <div id="questions"></div>
+        <div id="questions">
+          <div class="q">
+            <input class="q-label" value="Team Number"> 
+            <input name="teamNumber" placeholder="Team Number" required>
+          </div>
+          <div class="q">
+            <input class="q-label" value="Team Name"> 
+            <input name="teamName" placeholder="Team Name" required>
+          </div>
+          <div class="q">
+            <input class="q-label" value="Leader"> 
+            <input name="leader" placeholder="Leader" required>
+          </div>
+          <div class="q">
+            <input class="q-label" value="Auto Strat"> 
+            <input name="autoStrat" placeholder="Auto Strat" required>
+          </div>
+          <div class="q">
+            <input class="q-label" value="Drive Train Type"> 
+            <input name="driveTrain" placeholder="Drive Train Type">
+          </div>
+          <div class="q">
+            <input class="q-label" value="Weight (lbs)"> 
+            <input name="weight" placeholder="Weight (lbs)">
+          </div>
+          <div class="q">
+            <input class="q-label" value="Auto Climb?"> 
+            <input name="autoClimb" placeholder="Auto Climb?">
+          </div>
+        </div>
 
         <div class="form-controls">
           <button id="submit-btn" type="submit">Submit</button>
-          <button type="button" id="clear-all">Clear All</button>
+          <button type="button" id="clear-all" onclick="document.getElementById('scout-form').reset()">Clear All</button>
+          <button type="button" id="scan-master-qr">Scan Master Data QR</button>
         </div>
       </form>
 
@@ -464,6 +505,39 @@
       // ... (if there are more team objects, add them here)
     },
   ];
+    </script>
+    <script>
+      // Scanner for master data
+      let html5QrcodeScanner;
+      $('#scan-master-qr').addEventListener('click', () => {
+        $('#scanner-modal').style.display = 'flex';
+        if (!html5QrcodeScanner) {
+          html5QrcodeScanner = new Html5QrcodeScanner("scanner-container", { fps: 10, qrbox: {width: 250, height: 250} });
+          html5QrcodeScanner.render(onMasterScanSuccess);
+        }
+      });
+
+      function onMasterScanSuccess(decodedText) {
+        try {
+          const data = JSON.parse(decodedText);
+          if (Array.isArray(data)) {
+            // Master data is an array of submissions
+            const existing = JSON.parse(localStorage.getItem('submissions') || '[]');
+            const existingIds = new Set(existing.map(s => s.uuid));
+            const newSubs = data.filter(s => !existingIds.has(s.uuid));
+            existing.push(...newSubs);
+            localStorage.setItem('submissions', JSON.stringify(existing));
+            alert(`Added ${newSubs.length} new submissions from master.`);
+            $('#scanner-modal').style.display = 'none';
+            html5QrcodeScanner.clear();
+            renderSubs(); // refresh UI
+          } else {
+            alert('Invalid master data format.');
+          }
+        } catch (err) {
+          alert('Failed to parse master data: ' + err.message);
+        }
+      }
     </script>
     <script src="storageSync.js"></script>
     <script src="serverSync.js"></script>

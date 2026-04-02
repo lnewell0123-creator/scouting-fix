@@ -133,12 +133,18 @@ const defaultQuestions = [
   {label:'Team Name', name:'teamName', required:true},
   {label:'Leader', name:'leader', required:true},
   {label:'Auto Strat', name:'autoStrat', required:true},
+  {label:'Drive Train Type', name:'driveTrain', required:false},
+  {label:'Weight (lbs)', name:'weight', required:false},
+  {label:'Length (inches)', name:'length', required:false},
+  {label:'Width (inches)', name:'width', required:false},
+  {label:'Height (inches)', name:'height', required:false},
   {label:'Auto Climb?', name:'autoClimb', required:false},
   {label:'Score Accuracy?', name:'scoreAccuracy', required:false},
   {label:'Shooting Cycle Number?', name:'shootingCycleNumber', required:false},
   {label:'Defense Rating?', name:'defenseRating', required:false},
   {label:'Climb Time?', name:'climbTime', required:false},
-  {label:'Endgame Climb?', name:'endgameClimb', required:false}
+  {label:'Endgame Climb?', name:'endgameClimb', required:false},
+  {label:'Notes', name:'notes', required:false}
 ];
 
 function loadQuestions(){
@@ -176,6 +182,9 @@ function initFormPage(){
   setPwdBtn.addEventListener('click', setPasswordFlow);
   clearPwdBtn.addEventListener('click', clearPasswordFlow);
   addQ.addEventListener('click', ()=>{ addQuestionPrompt(); });
+  resetDefaults.addEventListener('click', ()=>{ if(confirm('Reset questions to defaults?')) { localStorage.removeItem('form-questions-v2'); renderQuestions(); } });
+
+  window.resetDefaults = () => { if(confirm('Reset questions to defaults?')) { localStorage.removeItem('form-questions-v2'); renderQuestions(); } };
 
   // teams.json upload support (useful when serving as file:// or when fetch fails)
   const teamsFileEl = document.getElementById('teamsFile');
@@ -229,6 +238,8 @@ function initFormPage(){
     saveQuestions(qs); renderQuestions();
     setTimeout(()=>{ const lastInp = $(`#questions .q[data-idx="${qs.length-1}"] input[name]`); if(lastInp) lastInp.focus(); }, 50);
   }
+
+  window.addQuestionPrompt = addQuestionPrompt;
 
   function renderSubs(){
     const subs = loadSubs();
@@ -310,6 +321,9 @@ function initFormPage(){
     // refresh list page UI (if present)
     try{ if(typeof renderList === 'function') renderList(); }catch(e){}
     try{ if(typeof renderSavedList === 'function') renderSavedList(); }catch(e){}
+
+    // Send to master database
+    try { await window.syncPitFormToServer(); } catch(e) { console.log('Sync failed', e); }
 
     alert('Submission saved and data sheet updated');
   };
@@ -613,9 +627,22 @@ function initListPage(){
   clearAllBtn.addEventListener('click', async () => {
     const ok = await verifyPassword('Enter password to clear all entries');
     if (!ok) return;
+    // Clear local
     saveSubs([]);
+    // Clear server if available
+    if (typeof serverSync !== 'undefined' && serverSync.clearAll) {
+      try {
+        await serverSync.clearAll();
+      } catch (e) {
+        console.log('Failed to clear server data', e);
+      }
+    }
     renderList();
+    // Also refresh the synced display
+    if (typeof loadSyncedData === 'function') loadSyncedData();
   });
+  ;
+
 
   function renderList(){
     const subs = loadSubs();

@@ -37,8 +37,11 @@
     });
 
     qrBtn.addEventListener('click', () => {
-      // Generate QR from the 'submissions' list
-      window.qrSync.showLatestMatchQR('qr-container', 'submissions');
+      // Generate QR from all submissions
+      const raw = localStorage.getItem('submissions');
+      const matches = raw ? JSON.parse(raw) : [];
+      if (matches.length === 0) return alert('No submissions to sync!');
+      window.qrSync.showAllMatchQR('qr-container', 'submissions');
       document.getElementById('qr-modal').style.display = 'flex';
     });
   }

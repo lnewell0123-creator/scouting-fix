@@ -6,9 +6,9 @@
   const $$ = s => Array.from(document.querySelectorAll(s));
 
   function setupPostMatchButtons() {
-    const formControlsTop = document.querySelector('.form-controls-top');
-    if (!formControlsTop) {
-      console.error('form-controls-top not found (post-match controls).');
+    const formControls = document.querySelector('.form-controls');
+    if (!formControls) {
+      console.error('form-controls not found (post-match controls).');
       return;
     }
 
@@ -19,38 +19,11 @@
     syncBtn.id = 'firebase-sync-btn';
     syncBtn.textContent = 'Send to Master Database';
     syncBtn.style.cssText = 'background-color: #0066cc; color: white; cursor: pointer; margin-left: 10px; padding: 8px 16px; border: none; border-radius: 4px;';
-    formControlsTop.appendChild(syncBtn);
+    formControls.appendChild(syncBtn);
 
     syncBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       await syncPostMatchFormToFirebase();
-    });
-
-    const setSheetsUrlBtn = document.createElement('button');
-    setSheetsUrlBtn.type = 'button';
-    setSheetsUrlBtn.id = 'set-sheets-url-btn';
-    setSheetsUrlBtn.textContent = 'Set Google Sheets URL';
-    setSheetsUrlBtn.style.cssText = 'background-color: #34a853; color: white; cursor: pointer; margin-left: 10px; padding: 8px 16px; border: none; border-radius: 4px;';
-    formControlsTop.appendChild(setSheetsUrlBtn);
-
-    setSheetsUrlBtn.addEventListener('click', () => {
-      const url = prompt('Enter your Google Apps Script web app URL:');
-      if (url) {
-        localStorage.setItem('googleSheetsUrl', url);
-        alert('Google Sheets URL set!');
-      }
-    });
-
-    const sendSheetsBtn = document.createElement('button');
-    sendSheetsBtn.type = 'button';
-    sendSheetsBtn.id = 'send-sheets-btn';
-    sendSheetsBtn.textContent = 'Send to Google Sheets';
-    sendSheetsBtn.style.cssText = 'background-color: #34a853; color: white; cursor: pointer; margin-left: 10px; padding: 8px 16px; border: none; border-radius: 4px;';
-    formControlsTop.appendChild(sendSheetsBtn);
-
-    sendSheetsBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      await sendToGoogleSheets();
     });
 
     console.log('Post-match sync buttons set up');
@@ -71,18 +44,27 @@
     const rows = tableBody.querySelectorAll('tr');
     const submissions = [];
 
+    // Get all column names from the header
+    const tableHead = document.getElementById('table-head');
+    const headers = tableHead ? Array.from(tableHead.querySelectorAll('th')).map(th => th.textContent.trim()) : [];
+
     rows.forEach((row, idx) => {
       const inputs = row.querySelectorAll('input');
       const rowData = {};
       let hasData = false;
 
+      // Initialize all fields to empty
+      headers.forEach(header => {
+        rowData[header] = '';
+      });
+
       inputs.forEach(input => {
         const name = input.getAttribute('name') || '';
         const value = input.value.trim();
-        if (value) {
-          hasData = true;
-          const fieldName = name.split('-')[0];
-          if (fieldName) rowData[fieldName] = value;
+        const fieldName = name.split('-')[0];
+        if (fieldName) {
+          rowData[fieldName] = value;
+          if (value) hasData = true;
         }
       });
 
@@ -90,7 +72,7 @@
         submissions.push({
           ...rowData,
           rowIndex: idx,
-          type: 'postMatch',
+          type: 'matchScouting',
           sentAt: new Date().toISOString(),
           source: 'page5'
         });
@@ -131,7 +113,7 @@
       }
 
       for (const submission of submissions) {
-        await serverSync.saveSubmission('postMatchScouting', submission);
+        await serverSync.saveSubmission('matchScouting', submission);
       }
 
       if (btn) {
@@ -158,59 +140,6 @@
       }
     }
   };
-
-  async function sendToGoogleSheets() {
-    try {
-      const sheetsUrl = localStorage.getItem('googleSheetsUrl');
-      if (!sheetsUrl) {
-        alert('Google Sheets URL not set. Please use "Set Google Sheets URL" first.');
-        return;
-      }
-
-      const submissions = getSubmissions();
-      if (!submissions.length) {
-        alert('No match data to send. Please fill in at least Team Number and one field.');
-        return;
-      }
-
-      const btn = $('#send-sheets-btn');
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Sending...';
-      }
-
-      const response = await fetch(sheetsUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submissions)
-      });
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-
-      if (btn) {
-        btn.textContent = 'Sent! ✓';
-        btn.style.backgroundColor = '#00aa00';
-      }
-
-      alert(`✓ Data sent to Google Sheets!\n\nRows sent: ${submissions.length}`);
-
-      setTimeout(() => {
-        if (btn) {
-          btn.textContent = 'Send to Google Sheets';
-          btn.style.backgroundColor = '#34a853';
-          btn.disabled = false;
-        }
-      }, 3000);
-    } catch (error) {
-      console.error('Sheets sync error:', error);
-      alert(`Sheets sync failed: ${error.message}`);
-      const btn = $('#send-sheets-btn');
-      if (btn) {
-        btn.textContent = 'Send to Google Sheets';
-        btn.disabled = false;
-      }
-    }
-  }
 
   init();
 })();

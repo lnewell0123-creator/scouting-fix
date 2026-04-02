@@ -68,6 +68,7 @@
       <p>Position a scout's QR code within the frame to sync their latest match.</p>
       <div id="reader"></div>
       <div id="scan-feedback" style="margin-top: 15px; font-weight: bold;"></div>
+      <button id="generate-master-qr" style="margin-top: 15px; background-color: #34a853; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Generate Master Data QR</button>
     </div>
 
     <div class="scan-history">
@@ -84,6 +85,15 @@
         </thead>
         <tbody></tbody>
       </table>
+    </div>
+
+    <!-- Master Data QR Modal -->
+    <div id="master-qr-modal" class="qr-modal" onclick="this.style.display='none'">
+      <div class="qr-content" onclick="event.stopPropagation()">
+        <h3>Master Data QR Code</h3>
+        <div id="master-qr-container"></div>
+        <p style="margin-top:10px; font-size:0.8em; color:#666;">Scan this on client devices to sync all master data.</p>
+      </div>
     </div>
   </main>
 
@@ -138,6 +148,24 @@
       "reader", { fps: 10, qrbox: {width: 250, height: 250} }
     );
     html5QrcodeScanner.render(onScanSuccess);
+
+    // Generate master data QR
+    $('#generate-master-qr').addEventListener('click', async () => {
+      try {
+        const allData = await serverSync.getSubmissions();
+        const allSubs = Object.values(allData).flat();
+        // Filter to avoid duplicates, but since it's all, just send
+        const qrData = JSON.stringify(allSubs);
+        $('#master-qr-modal').style.display = 'flex';
+        new QRCode($('#master-qr-container'), {
+          text: qrData,
+          width: 256,
+          height: 256
+        });
+      } catch (e) {
+        alert('Failed to generate master QR: ' + e.message);
+      }
+    });
   </script>
 </body>
 </html>

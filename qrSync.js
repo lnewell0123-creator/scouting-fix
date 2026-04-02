@@ -44,11 +44,11 @@ const qrSync = {
     },
 
     /**
-     * Retrieves the latest match, stringifies it, and renders it to the sync div.
+     * Retrieves all matches, stringifies them as an array, and renders it to the sync div.
      * @param {string} containerId - The ID of the div where the QR should appear
      * @param {string} customKey - Optional key if using something other than 'submissions'
      */
-    showLatestMatchQR: function(containerId, customKey = null) {
+    showAllMatchQR: function(containerId, customKey = null) {
         const key = customKey || this.STORAGE_KEY;
         const rawData = localStorage.getItem(key);
         const matches = rawData ? JSON.parse(rawData) : [];
@@ -58,16 +58,15 @@ const qrSync = {
             return;
         }
 
-        const latestMatch = matches[matches.length - 1];
         const syncContainer = document.getElementById(containerId);
         
         // Clear previous QR codes
         syncContainer.innerHTML = '';
         syncContainer.style.display = 'block'; // Unhide the div
 
-        // Generate the QR Code
+        // Generate the QR Code for all matches
         new QRCode(syncContainer, {
-            text: JSON.stringify(latestMatch),
+            text: JSON.stringify(matches),
             ...QR_CONFIG
         });
     }

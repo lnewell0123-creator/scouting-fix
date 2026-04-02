@@ -12,11 +12,11 @@ main { background-color: white; padding: 20px; margin: 20px; border-radius: 8px;
 .number-list li{margin:1rem 0}
 .num-btn{font-size:1.1rem;padding:.5rem 1rem;border:1px solid var(--text);background:transparent;color:var(--text)}
 .info{margin-top:.5rem}
-textarea{width:100%;padding:.5rem;background:#111;border:1px solid var(--border);color:var(--text)}
+textarea{width:100%;padding:.5rem;background:white;border:1px solid #ccc;color:black;border-radius:4px}
 .save{margin-top:.5rem}
 #preview{margin-top:1rem}
 form .q{margin-bottom:.75rem}
-input{width:100%;padding:.5rem;background:#111;border:1px solid var(--border);color:var(--text)}
+input{width:100%;padding:.5rem;background:white;border:1px solid #ccc;color:black;border-radius:4px}
 .form-controls{display:flex;gap:.5rem}
 .list-controls,.form-controls-top{display:flex;gap:10px;margin:0 0 1rem 0; flex-wrap: wrap; justify-content: center;}
 .small-btn{font-size:.9rem;padding:.25rem .5rem;border:1px solid var(--text);background:transparent;color:var(--text)}
@@ -30,7 +30,7 @@ button{cursor:pointer;background-color: #0066cc; color: white; border: none; pad
 button:hover { background-color: #0055aa; }
 table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
 th, td { border: 1px solid var(--border); padding: 0.5rem; text-align: left; }
-th { background: var(--bg); color: var(--text); }
+th { background: #f0f0f0; color: #333; }
 input { width: 100%; }
 .team { padding-left: 20px; }
 details { margin: 0; }

@@ -126,11 +126,24 @@ const serverSync = (function () {
         return Object.keys(all).length > 0 ? all : (data || {});
     }
 
+    async function clearAll() {
+        const serverUrl = getServerUrl();
+        if (serverUrl) {
+            try {
+                await fetch(`${serverUrl}/api/clear`, { method: 'POST' });
+            } catch (e) {
+                console.log('Server clear failed', e);
+            }
+        }
+        setLocalMasterData(defaultData());
+    }
+
     return {
         getServerUrl,
         saveSubmission,
         fetchAllData,
         getSubmissions,
+        clearAll,
         _getLocalMasterData: getLocalMasterData,
         _setLocalMasterData: setLocalMasterData
     };
